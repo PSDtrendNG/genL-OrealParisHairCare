@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X Comment Generator</title>
+  <style>
+    :root {
+      --blue-50: #f0f7ff;
+      --blue-100: #e0effe;
+      --blue-200: #b9dcfe;
+      --blue-300: #7cc2fc;
+      --blue-400: #36a5f7;
+      --blue-500: #0c8ce9;
+      --blue-600: #0270c7;
+      --blue-700: #0359a1;
+      --text: #0f1c2e;
+      --text-light: #4a6078;
+      --white: #ffffff;
+      --border: #c8dff5;
+      --shadow: 0 4px 24px rgba(12, 140, 233, 0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(160deg, var(--blue-50) 0%, #fff 45%, var(--blue-100) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+      line-height: 1.5;
+    }
+    .container {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    header { text-align: center; padding: 12px 0 8px; }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--blue-600);
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-top: 6px;
+    }
+    .card {
+      background: var(--white);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .counter {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--blue-600);
+      text-align: center;
+      padding: 10px 16px;
+      background: var(--blue-50);
+      border-radius: 10px;
+      border: 1px solid var(--blue-200);
+    }
+    .preview-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .preview {
+      background: var(--blue-50);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 120px;
+      white-space: pre-wrap;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.55;
+      word-break: break-word;
+    }
+    .preview.empty {
+      color: var(--text-light);
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+      width: 100%;
+    }
+    button:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--blue-500);
+      color: var(--white);
+      box-shadow: 0 4px 14px rgba(12, 140, 233, 0.35);
+    }
+    .btn-primary:hover { background: var(--blue-600); }
+    .btn-primary:disabled {
+      background: var(--blue-300);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-secondary {
+      background: var(--white);
+      color: var(--blue-600);
+      border: 2px solid var(--blue-300);
+    }
+    .btn-secondary:hover {
+      background: var(--blue-50);
+      border-color: var(--blue-400);
+    }
+    .btn-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .hint {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-light);
+      padding: 8px 12px;
+      background: var(--blue-50);
+      border-radius: 8px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--blue-700);
+      color: var(--white);
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      z-index: 100;
+      pointer-events: none;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    footer {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      text-align: center;
+    }
+    @media (min-width: 480px) {
+      h1 { font-size: 2rem; }
+      .actions { flex-direction: row; }
+      .actions button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>X Comment Generator</h1>
+      <p class="subtitle">Perth x L'Oreal Paris Hair Care</p>
+    </header>
+    <div class="card">
+      <div class="counter" id="counter">Đã copy: 0 comment</div>
+      <div>
+        <div class="preview-label">Last generated comment</div>
+        <div class="preview empty" id="preview">Press Generate &amp; Copy to create a comment</div>
+      </div>
+      <div class="actions">
+        <button class="btn-primary" id="btnGenerate">Generate &amp; Copy</button>
+        <button class="btn-secondary" id="btnPost" disabled>Generate &amp; Post to X</button>
+      </div>
+      <div class="hint">Press Space to Generate &amp; Post to X</div>
+    </div>
+    <footer>No login required. All comments stay on your device.</footer>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script>
+    (function () {
+      const FIXED_SUFFIX = '\n\nPERTH HAIR CARE ROUTINE\n\n#LOrealParisHairxPerth';
+      const FIXED_LEN = FIXED_SUFFIX.length;
+      const MAX_BODY = 280 - FIXED_LEN - 4;
+
+      // Multi-language, one theme per comment. No Vietnamese.
+      const LANGS = {
+        en: {
+          visual: [
+            "Perth's visuals are pure excellence today.",
+            "The visual of Perth feels so premium and polished.",
+            "Perth looks incredible in every single frame.",
+            "His visual presence is on another level tonight.",
+            "Perth's overall look is absolutely striking.",
+            "Every shot of Perth feels intentional and beautiful.",
+            "The visual quality of Perth tonight is unreal.",
+            "Perth brings such a refined visual impact.",
+            "His visuals today are clean, sharp, and unforgettable.",
+            "Perth's appearance is pure star power.",
+            "The way Perth presents himself is flawless.",
+            "Visuals this strong are rare. Perth delivers.",
+            "Perth's look tonight is pure elegance.",
+            "His visual identity feels so elevated and fresh.",
+            "Perth owns the frame with pure visual strength."
+          ],
+          handsome: [
+            "Perth looks so handsome tonight.",
+            "His charm and good looks are on full display.",
+            "Perth's visuals are pure attraction.",
+            "He looks sharp, polished, and completely magnetic.",
+            "The handsomeness from Perth is strong.",
+            "Perth owns every frame with pure style.",
+            "His looks tonight are clean and captivating.",
+            "So handsome and full of presence. Unreal.",
+            "Perth brings that effortless charm.",
+            "His attractive vibe is impossible to miss.",
+            "Sharp looks and pure charisma from Perth.",
+            "Perth looks refined and striking.",
+            "The handsomeness is next level tonight.",
+            "He carries such a polished and attractive aura.",
+            "Pure visual appeal from Perth."
+          ],
+          coolVibe: [
+            "Perth's cool vibe is pure magnetism.",
+            "He carries such a cool and captivating energy.",
+            "Perth's presence feels sharp and effortless.",
+            "That cool aura from Perth is hard to ignore.",
+            "Perth brings a refined and cool energy tonight.",
+            "His vibe is calm, strong, and completely stylish.",
+            "Perth owns the cool factor with ease.",
+            "The cool energy Perth radiates is next level.",
+            "Sharp, cool, and full of presence. Pure Perth.",
+            "His cool and attractive vibe stands out clearly.",
+            "Perth's energy feels modern and magnetic.",
+            "That understated cool from Perth is perfect.",
+            "Perth carries cool confidence so naturally.",
+            "The vibe he brings is clean and captivating.",
+            "Cool does not get better than this. Perth delivers."
+          ],
+          outfit: [
+            "Perth's outfit looks so polished tonight.",
+            "His styling choices are clean and elevated.",
+            "The outfit on Perth fits the vibe perfectly.",
+            "He looks sharp and well put-together.",
+            "Perth's fashion tonight is pure style.",
+            "The outfit enhances his presence so well.",
+            "Clean lines and strong styling. Perfect execution.",
+            "His look feels intentional and premium.",
+            "Perth wears his outfit with pure confidence.",
+            "The outfit coordination is on point tonight.",
+            "Stylish, refined, and completely on brand.",
+            "His fashion choices tonight are so well done.",
+            "The outfit adds so much to his overall impact.",
+            "Perth looks elevated in every piece he wears.",
+            "Strong styling that matches his energy perfectly."
+          ],
+          product: [
+            "The Hair Care Routine smells so good and lasts long.",
+            "This Hair Care Routine has such a lasting fragrance.",
+            "The scent from the Hair Care Routine is fresh and lasting.",
+            "Hair Care Routine leaves a beautiful long-lasting scent.",
+            "The fragrance of this Hair Care Routine stays all day.",
+            "So fragrant and long-lasting. Hair Care Routine delivers.",
+            "The Hair Care Routine scent is clean and stays for hours.",
+            "Love how the Hair Care Routine fragrance lingers.",
+            "Fresh scent that lasts. Hair Care Routine is impressive.",
+            "The Hair Care Routine has a soft scent that lasts long.",
+            "Long-lasting fragrance from the Hair Care Routine is perfect.",
+            "The scent is gentle yet stays all day. Great routine.",
+            "Hair Care Routine fragrance is fresh and truly lasting.",
+            "The lasting scent of this Hair Care Routine stands out.",
+            "Clean, fragrant, and long-lasting. Hair Care Routine wins."
+          ],
+          thanks: [
+            "Thank you L'Oreal Paris for inviting Perth.",
+            "Grateful to L'Oreal Paris for having Perth.",
+            "Thanks L'Oreal Paris for bringing Perth on board.",
+            "Appreciate L'Oreal Paris for inviting Perth.",
+            "Thank you L'Oreal Paris. Hope for the next collab.",
+            "So glad L'Oreal Paris invited Perth. Looking forward to more.",
+            "Thanks to L'Oreal Paris for this collaboration.",
+            "Grateful that L'Oreal Paris chose Perth. Hope for more.",
+            "Thank you L'Oreal Paris for the trust in Perth.",
+            "Appreciate this invitation from L'Oreal Paris.",
+            "Thanks L'Oreal Paris. Excited for the next partnership.",
+            "Happy that L'Oreal Paris invited Perth. More please.",
+            "Thank you L'Oreal Paris for another great moment with Perth.",
+            "Grateful for L'Oreal Paris welcoming Perth. Next collab soon.",
+            "Thanks L'Oreal Paris for making this happen with Perth."
+          ]
+        },
+        th: {
+          visual: [
+            "วิชวล Perth วันนี้ปังมาก",
+            "ภาพลักษณ์ Perth ดูพรีเมียมสุดๆ",
+            "Perth ดูดีในทุกเฟรม",
+            "พลังวิชวลของ Perth แรงมาก",
+            "ลุคโดยรวมของ Perth สวยและคม",
+            "ทุกช็อตของ Perth ดูตั้งใจ",
+            "คุณภาพวิชวลของ Perth วันนี้ไม่จริง",
+            "Perth มีผลกระทบทางภาพที่ละเอียด",
+            "วิชวลวันนี้สะอาดและน่าจดจำ",
+            "การปรากฏตัวของ Perth คือพลังดาว"
+          ],
+          handsome: [
+            "Perth หล่อมากคืนนี้",
+            "เสน่ห์และความหล่อของเขาเต็มที่",
+            "วิชวล Perth คือแรงดึงดูดบริสุทธิ์",
+            "เขาดูคม เรียบ และมีพลัง",
+            "ความหล่อจาก Perth แรงมาก",
+            "Perth ครองทุกเฟรมด้วยสไตล์",
+            "ลุคคืนนี้สะอาดและดึงดูด",
+            "หล่อและมีพลังมาก ไม่จริง",
+            "Perth มีเสน่ห์แบบไม่ต้องพยายาม",
+            "ออร่าที่ดึงดูดของเขาชัดเจน"
+          ],
+          coolVibe: [
+            "ออร่าคูลของ Perth คือแรงดึงดูดบริสุทธิ์",
+            "เขามีพลังงานคูลและดึงดูด",
+            "การปรากฏของ Perth รู้สึกคมและไม่ต้องพยายาม",
+            "ออร่าคูลจาก Perth ยากที่จะเพิกเฉย",
+            "Perth นำพลังงานละเอียดและคูลคืนนี้",
+            "ออร่าของเขาสงบ แข็งแกร่ง และมีสไตล์",
+            "Perth ครองคูลแฟคเตอร์ได้อย่างง่ายดาย",
+            "พลังงานคูลที่ Perth แผ่กระจายคือระดับถัดไป",
+            "คม คูล และมีพลัง Pure Perth",
+            "ออร่าคูลและดึงดูดของเขาชัดเจน"
+          ],
+          outfit: [
+            "ชุดของ Perth คืนนี้ดูเรียบหรู",
+            "การเลือกสไตล์ของเขาสะอาดและยกสูง",
+            "ชุดของ Perth เข้ากับออร่าเป๊ะ",
+            "เขาดูคมและจัดเต็ม",
+            "แฟชั่น Perth คืนนี้คือสไตล์บริสุทธิ์",
+            "ชุดช่วยเสริมการปรากฏของเขาดีมาก",
+            "เส้นสะอาดและสไตล์แรง เป๊ะ",
+            "ลุคของเขารู้สึกตั้งใจและพรีเมียม",
+            "Perth ใส่ชุดด้วยความมั่นใจ",
+            "การจับคู่ชุดคืนนี้ตรงจุด"
+          ],
+          product: [
+            "Hair Care Routine หอมมากและติดทนนาน",
+            "Hair Care Routine นี้มีกลิ่นหอมติดทน",
+            "กลิ่นจาก Hair Care Routine สดและติดนาน",
+            "Hair Care Routine ทิ้งกลิ่นหอมสวยและติดทน",
+            "กลิ่นของ Hair Care Routine นี้ติดทั้งวัน",
+            "หอมและติดทน Hair Care Routine ส่งมอบ",
+            "กลิ่น Hair Care Routine สะอาดและติดหลายชั่วโมง",
+            "ชอบที่กลิ่น Hair Care Routine ค้างอยู่",
+            "กลิ่นสดที่ติดทน Hair Care Routine น่าประทับใจ",
+            "Hair Care Routine มีกลิ่นนุ่มที่ติดนาน"
+          ],
+          thanks: [
+            "ขอบคุณ L'Oreal Paris ที่เชิญ Perth",
+            "ซาบซึ้งที่ L'Oreal Paris ให้ Perth มา",
+            "ขอบคุณ L'Oreal Paris ที่พา Perth มาร่วม",
+            "ขอบคุณ L'Oreal Paris สำหรับการเชิญ Perth",
+            "ขอบคุณ L'Oreal Paris หวังคอลแลบครั้งต่อไป",
+            "ดีใจที่ L'Oreal Paris เชิญ Perth รอครั้งต่อไป",
+            "ขอบคุณ L'Oreal Paris สำหรับคอลแลบนี้",
+            "ซาบซึ้งที่ L'Oreal Paris เลือก Perth หวังมีอีก",
+            "ขอบคุณ L'Oreal Paris สำหรับความไว้วางใจใน Perth",
+            "ขอบคุณ L'Oreal Paris ที่ทำให้เกิดขึ้นกับ Perth"
+          ]
+        },
+        ko: {
+          visual: [
+            "Perth 비주얼이 오늘 최고예요.",
+            "비주얼이 정말 프리미엄이에요.",
+            "모든 프레임에서 멋져요.",
+            "비주얼 존재감이 한 단계 위예요.",
+            "전체 룩이 정말 인상적이에요.",
+            "모든 샷이 의도적이고 아름다워요.",
+            "비주얼 퀄리티가 비현실적이에요.",
+            "정제된 비주얼 임팩트를 줘요.",
+            "오늘 비주얼이 깔끔하고 잊을 수 없어요.",
+            "등장이 순수 스타 파워예요."
+          ],
+          handsome: [
+            "Perth가 오늘 너무 잘생겼어요.",
+            "매력과 외모가 풀로 드러나요.",
+            "비주얼이 순수 매력이에요.",
+            "날카롭고 세련되고 자석 같아요.",
+            "잘생김이 정말 강해요.",
+            "모든 프레임을 스타일로 장악해요.",
+            "오늘 룩이 깔끔하고 매혹적이에요.",
+            "너무 잘생기고 존재감이 넘쳐요.",
+            "노력 없이 나오는 매력이 있어요.",
+            "매력적인 바이브가 놓칠 수 없어요."
+          ],
+          coolVibe: [
+            "Perth의 쿨한 바이브가 순수 자석 같아요.",
+            "쿨하고 매혹적인 에너지를 가지고 있어요.",
+            "존재감이 날카롭고 노력 없이 느껴져요.",
+            "그 쿨한 아우라를 무시하기 어려워요.",
+            "정제되고 쿨한 에너지를 줘요.",
+            "바이브가 차분하고 강하고 완전히 스타일리시해요.",
+            "쿨 팩터를 쉽게 장악해요.",
+            "방사하는 쿨한 에너지가 한 단계 위예요.",
+            "날카롭고 쿨하고 존재감 가득. Pure Perth.",
+            "쿨하고 매력적인 바이브가 명확히 돋보여요."
+          ],
+          outfit: [
+            "오늘 의상이 정말 세련됐어요.",
+            "스타일링 선택이 깔끔하고 고급스러워요.",
+            "의상이 바이브에 완벽하게 맞아요.",
+            "날카롭고 잘 갖춰진 룩이에요.",
+            "오늘 패션이 순수 스타일이에요.",
+            "의상이 존재감을 잘 살려줘요.",
+            "깔끔한 라인과 강한 스타일링. 완벽해요.",
+            "룩이 의도적이고 프리미엄이에요.",
+            "자신감 있게 의상을 소화해요.",
+            "의상 코디가 오늘 포인트예요."
+          ],
+          product: [
+            "Hair Care Routine 향이 너무 좋고 오래가요.",
+            "이 Hair Care Routine은 오래 남는 향이 있어요.",
+            "Hair Care Routine 향이 상쾌하고 오래가요.",
+            "Hair Care Routine이 아름다운 오래 가는 향을 남겨요.",
+            "이 Hair Care Routine 향이 하루 종일 남아요.",
+            "향기롭고 오래가요. Hair Care Routine이 해내요.",
+            "Hair Care Routine 향이 깨끗하고 몇 시간 남아요.",
+            "Hair Care Routine 향이 남는 게 좋아요.",
+            "상쾌하고 오래 가는 향. Hair Care Routine이 인상적이에요.",
+            "Hair Care Routine이 부드럽고 오래 가는 향이 있어요."
+          ],
+          thanks: [
+            "L'Oreal Paris가 Perth를 초대해 주셔서 감사해요.",
+            "L'Oreal Paris 덕분에 Perth를 볼 수 있어서 고마워요.",
+            "L'Oreal Paris가 Perth를 합류시켜 주셔서 감사합니다.",
+            "L'Oreal Paris의 초청에 감사드려요.",
+            "L'Oreal Paris 감사합니다. 다음 콜라보를 기대해요.",
+            "L'Oreal Paris가 Perth를 초대해 주셔서 기쁩니다. 더 기대해요.",
+            "이 콜라보에 감사해요.",
+            "L'Oreal Paris가 Perth를 선택해 주셔서 감사해요. 더 많았으면.",
+            "Perth에 대한 신뢰에 감사드립니다.",
+            "L'Oreal Paris가 이뤄 주셔서 감사합니다."
+          ]
+        },
+        ja: {
+          visual: [
+            "Perthのビジュアルが今日は最高です。",
+            "ビジュアルがとてもプレミアムに感じます。",
+            "毎フレームで素敵です。",
+            "ビジュアルの存在感が一段上です。",
+            "全体のルックが本当に印象的です。",
+            "すべてのショットが意図的で美しいです。",
+            "ビジュアルの質が非現実的です。",
+            "洗練されたビジュアルインパクトを与えます。",
+            "今日のビジュアルはクリーンで忘れられません。",
+            "登場が純粋なスターパワーです。"
+          ],
+          handsome: [
+            "Perthが今夜とてもハンサムです。",
+            "魅力と見た目がフルに出ています。",
+            "ビジュアルが純粋な魅力です。",
+            "シャープで洗練されて磁力的です。",
+            "ハンサムさが本当に強いです。",
+            "すべてのフレームをスタイルで支配します。",
+            "今夜のルックはクリーンで魅力的です。",
+            "とてもハンサムで存在感が溢れます。",
+            "努力なしの魅力があります。",
+            "魅力的なバイブが見逃せません。"
+          ],
+          coolVibe: [
+            "Perthのクールなバイブが純粋な磁力です。",
+            "クールで魅力的なエネルギーを持っています。",
+            "存在感がシャープで努力なしに感じます。",
+            "そのクールなオーラを無視するのは難しいです。",
+            "洗練されてクールなエネルギーを届けます。",
+            "バイブが落ち着いていて強く完全にスタイリッシュです。",
+            "クールファクターを簡単に握ります。",
+            "放射するクールなエネルギーが一段上です。",
+            "シャープでクールで存在感たっぷり。Pure Perth。",
+            "クールで魅力的なバイブがはっきり際立ちます。"
+          ],
+          outfit: [
+            "今夜の衣装がとても洗練されています。",
+            "スタイリングの選択がクリーンで上質です。",
+            "衣装がバイブに完璧に合っています。",
+            "シャープで整ったルックです。",
+            "今夜のファッションが純粋なスタイルです。",
+            "衣装が存在感をよく引き立てます。",
+            "クリーンなラインと強いスタイリング。完璧です。",
+            "ルックが意図的でプレミアムです。",
+            "自信を持って衣装を着こなします。",
+            "衣装のコーディネートが今夜のポイントです。"
+          ],
+          product: [
+            "Hair Care Routineの香りがとても良くて長持ちします。",
+            "このHair Care Routineは長持ちする香りがあります。",
+            "Hair Care Routineの香りがフレッシュで長持ちします。",
+            "Hair Care Routineが美しい長持ちする香りを残します。",
+            "このHair Care Routineの香りが一日中残ります。",
+            "香りが良くて長持ち。Hair Care Routineが届けます。",
+            "Hair Care Routineの香りがクリーンで数時間残ります。",
+            "Hair Care Routineの香りが残るのが好きです。",
+            "フレッシュで長持ちする香り。Hair Care Routineが印象的です。",
+            "Hair Care Routineが柔らかく長持ちする香りがあります。"
+          ],
+          thanks: [
+            "L'Oreal ParisがPerthを招待してくれてありがとう。",
+            "L'Oreal ParisのおかげでPerthを見られて嬉しいです。",
+            "L'Oreal ParisがPerthを参加させてくれて感謝です。",
+            "L'Oreal Parisの招待に感謝します。",
+            "L'Oreal Parisありがとう。次のコラボを期待します。",
+            "L'Oreal ParisがPerthを招待してくれて嬉しいです。もっと期待。",
+            "このコラボに感謝です。",
+            "L'Oreal ParisがPerthを選んでくれてありがとう。もっとほしいです。",
+            "Perthへの信頼に感謝します。",
+            "L'Oreal Parisが実現してくれてありがとうございます。"
+          ]
+        },
+        zh: {
+          visual: [
+            "Perth今天的视觉太绝了。",
+            "视觉感觉很高级很精致。",
+            "每一帧都好看。",
+            "视觉存在感再上一个层次。",
+            "整体造型真的很抓人。",
+            "每一镜都感觉有用心。",
+            "视觉质量不真实。",
+            "带来很精炼的视觉冲击。",
+            "今天的视觉干净又难忘。",
+            "出场就是纯粹的星光。"
+          ],
+          handsome: [
+            "Perth今晚好帅。",
+            "魅力和颜都拉满了。",
+            "视觉就是纯粹的吸引力。",
+            "又锐利又精致又有磁感。",
+            "帅感真的很强。",
+            "用风格掌控每一帧。",
+            "今晚的造型干净又抓人。",
+            "太帅了存在感满满。",
+            "有种不费力的魅力。",
+            "那种吸引人的感觉错过不了。"
+          ],
+          coolVibe: [
+            "Perth的酷感是纯粹的磁感。",
+            "他带着酷又抓人的能量。",
+            "存在感锐利又不费力。",
+            "那种酷的气场很难忽视。",
+            "带来精炼又酷的能量。",
+            "氛围沉稳、有力又完全有型。",
+            "轻松拿下酷感。",
+            "散发的酷能量再上一个层次。",
+            "锐利、酷、存在感满满。Pure Perth。",
+            "酷又吸引人的氛围很明显。"
+          ],
+          outfit: [
+            "今晚的穿搭很精致。",
+            "造型选择干净又高级。",
+            "衣服和氛围完全贴合。",
+            "看起来锐利又完整。",
+            "今晚的时尚就是纯粹的风格。",
+            "穿搭很好地托起了存在感。",
+            "干净的线条和强造型，完美。",
+            "造型感觉有意图又高级。",
+            "自信地驾驭了整套穿搭。",
+            "今晚的穿搭搭配很到位。"
+          ],
+          product: [
+            "Hair Care Routine闻起来好香而且很持久。",
+            "这套Hair Care Routine有持久的香味。",
+            "Hair Care Routine的香气清新又持久。",
+            "Hair Care Routine留下美丽又持久的香味。",
+            "这套Hair Care Routine的香味能留一整天。",
+            "又香又持久。Hair Care Routine做到了。",
+            "Hair Care Routine的香气干净，能留好几个小时。",
+            "喜欢Hair Care Routine香味的持久感。",
+            "清新又持久的香味。Hair Care Routine很出色。",
+            "Hair Care Routine有柔和又持久的香味。"
+          ],
+          thanks: [
+            "感谢L'Oreal Paris邀请Perth。",
+            "谢谢L'Oreal Paris让我们看到Perth。",
+            "感谢L'Oreal Paris请来Perth。",
+            "感谢L'Oreal Paris的邀请。",
+            "感谢L'Oreal Paris。希望下次再合作。",
+            "很高兴L'Oreal Paris邀请Perth。期待更多。",
+            "感谢这次合作。",
+            "感谢L'Oreal Paris选择Perth。希望还有更多。",
+            "感谢对Perth的信任。",
+            "感谢L'Oreal Paris促成这件事。"
+          ]
+        },
+        es: {
+          visual: [
+            "Los visuales de Perth son pure excellence hoy.",
+            "El visual se siente tan premium y polished.",
+            "Se ve increíble en cada frame.",
+            "Su presencia visual está en otro nivel.",
+            "El look general es absolutamente striking.",
+            "Cada toma se siente intencional y hermosa.",
+            "La calidad visual es unreal.",
+            "Aporta un impacto visual tan refined.",
+            "Sus visuales hoy son clean e inolvidables.",
+            "La aparición es pure star power."
+          ],
+          handsome: [
+            "Perth se ve tan guapo esta noche.",
+            "Su encanto y buena presencia están a full.",
+            "Los visuales son pure attraction.",
+            "Se ve sharp, polished y magnético.",
+            "La handsomeness es fuerte.",
+            "Domina cada frame con pure style.",
+            "Sus looks esta noche son clean y cautivadores.",
+            "Tan guapo y con tanta presencia. Unreal.",
+            "Trae ese encanto sin esfuerzo.",
+            "Su vibe atractiva es imposible de perder."
+          ],
+          coolVibe: [
+            "El cool vibe de Perth es pure magnetism.",
+            "Carga una energía cool y cautivadora.",
+            "Su presencia se siente sharp y sin esfuerzo.",
+            "Esa aura cool es difícil de ignorar.",
+            "Trae una energía refined y cool esta noche.",
+            "Su vibe es calm, strong y completamente stylish.",
+            "Posee el cool factor con facilidad.",
+            "La energía cool que irradia es next level.",
+            "Sharp, cool y full of presence. Pure Perth.",
+            "Su cool y attractive vibe se destaca claramente."
+          ],
+          outfit: [
+            "El outfit se ve tan polished esta noche.",
+            "Sus elecciones de styling son clean y elevated.",
+            "El outfit encaja perfecto con el vibe.",
+            "Se ve sharp y bien puesto.",
+            "La moda esta noche es pure style.",
+            "El outfit realza su presencia tan bien.",
+            "Líneas clean y styling fuerte. Perfect.",
+            "Su look se siente intencional y premium.",
+            "Lleva su outfit con confidence.",
+            "La coordinación del outfit está on point."
+          ],
+          product: [
+            "El Hair Care Routine huele tan bien y dura mucho.",
+            "Este Hair Care Routine tiene una fragancia que dura.",
+            "El aroma del Hair Care Routine es fresco y lasting.",
+            "El Hair Care Routine deja un aroma hermoso y lasting.",
+            "La fragancia de este Hair Care Routine se queda todo el día.",
+            "Tan fragante y lasting. Hair Care Routine delivers.",
+            "El aroma del Hair Care Routine es clean y dura horas.",
+            "Me encanta cómo el aroma del Hair Care Routine permanece.",
+            "Aroma fresco que dura. Hair Care Routine es impressive.",
+            "El Hair Care Routine tiene un aroma suave que dura long."
+          ],
+          thanks: [
+            "Gracias L'Oreal Paris por invitar a Perth.",
+            "Agradecido con L'Oreal Paris por tener a Perth.",
+            "Gracias L'Oreal Paris por traer a Perth.",
+            "Aprecio la invitación de L'Oreal Paris.",
+            "Gracias L'Oreal Paris. Espero la próxima collab.",
+            "Tan contento de que L'Oreal Paris invitara a Perth. Más por favor.",
+            "Gracias por esta colaboración.",
+            "Agradecido de que L'Oreal Paris eligiera a Perth. Espero más.",
+            "Gracias por la confianza en Perth.",
+            "Gracias L'Oreal Paris por hacer esto posible con Perth."
+          ]
+        },
+        id: {
+          visual: [
+            "Visual Perth hari ini pure excellence.",
+            "Visual terasa begitu premium dan polished.",
+            "Terlihat incredible di setiap frame.",
+            "Kehadiran visual di level lain.",
+            "Look keseluruhan absolutely striking.",
+            "Setiap shot terasa intentional dan indah.",
+            "Kualitas visual unreal.",
+            "Bawa refined visual impact.",
+            "Visual hari ini clean dan unforgettable.",
+            "Penampilan pure star power."
+          ],
+          handsome: [
+            "Perth terlihat begitu ganteng malam ini.",
+            "Charm dan good looks full display.",
+            "Visual pure attraction.",
+            "Terlihat sharp, polished, dan magnetic.",
+            "Handsomeness kuat.",
+            "Kuasai setiap frame dengan pure style.",
+            "Look malam ini clean dan captivating.",
+            "Begitu ganteng dan penuh presence. Unreal.",
+            "Bawa effortless charm.",
+            "Attractive vibe mustahil dilewatkan."
+          ],
+          coolVibe: [
+            "Cool vibe Perth pure magnetism.",
+            "Dia bawa energi cool dan captivating.",
+            "Presence terasa sharp dan effortless.",
+            "Aura cool itu sulit diabaikan.",
+            "Bawa energi refined dan cool malam ini.",
+            "Vibe-nya tenang, kuat, dan sepenuhnya stylish.",
+            "Kuasai cool factor dengan mudah.",
+            "Energi cool yang dia pancarkan next level.",
+            "Sharp, cool, dan penuh presence. Pure Perth.",
+            "Cool dan attractive vibe-nya jelas menonjol."
+          ],
+          outfit: [
+            "Outfit terlihat begitu polished malam ini.",
+            "Pilihan styling clean dan elevated.",
+            "Outfit cocok sempurna dengan vibe.",
+            "Terlihat sharp dan well put-together.",
+            "Fashion malam ini pure style.",
+            "Outfit perkuat presence begitu baik.",
+            "Clean lines dan strong styling. Perfect.",
+            "Look terasa intentional dan premium.",
+            "Kenakan outfit dengan confidence.",
+            "Koordinasi outfit on point malam ini."
+          ],
+          product: [
+            "Hair Care Routine baunya enak dan tahan lama.",
+            "Hair Care Routine ini punya fragrance yang lasting.",
+            "Aroma Hair Care Routine segar dan lasting.",
+            "Hair Care Routine tinggalkan aroma indah yang lasting.",
+            "Fragrance Hair Care Routine ini bertahan seharian.",
+            "Begitu fragrant dan lasting. Hair Care Routine delivers.",
+            "Aroma Hair Care Routine clean dan bertahan berjam-jam.",
+            "Suka bagaimana aroma Hair Care Routine tetap ada.",
+            "Aroma segar yang lasting. Hair Care Routine impressive.",
+            "Hair Care Routine punya aroma lembut yang lasting."
+          ],
+          thanks: [
+            "Terima kasih L'Oreal Paris sudah undang Perth.",
+            "Bersyukur ke L'Oreal Paris yang undang Perth.",
+            "Makasih L'Oreal Paris sudah bawa Perth.",
+            "Appreciate undangan dari L'Oreal Paris.",
+            "Terima kasih L'Oreal Paris. Harap collab berikutnya.",
+            "Senang L'Oreal Paris undang Perth. Lebih banyak lagi.",
+            "Makasih untuk kolaborasi ini.",
+            "Bersyukur L'Oreal Paris pilih Perth. Harap lebih banyak.",
+            "Terima kasih atas kepercayaan ke Perth.",
+            "Makasih L'Oreal Paris sudah buat ini terjadi dengan Perth."
+          ]
+        }
+      };
+
+      const LANG_KEYS = Object.keys(LANGS);
+      const THEME_KEYS = ['visual', 'handsome', 'coolVibe', 'outfit', 'product', 'thanks'];
+
+      function pick(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function generateCommentBody() {
+        const lang = pick(LANG_KEYS);
+        const theme = pick(THEME_KEYS);
+        let body = pick(LANGS[lang][theme]);
+
+        body = body.replace(/\s+/g, ' ').trim();
+        if (['en', 'es', 'id'].includes(lang) && body.length > 0) {
+          body = body.charAt(0).toUpperCase() + body.slice(1);
+        }
+        if (!/[.!?。！？]$/.test(body)) {
+          body += (['zh', 'ja'].includes(lang) ? '。' : '.');
+        }
+
+        if (body.length > MAX_BODY) {
+          body = body.slice(0, MAX_BODY - 1).trim();
+          if (!/[.!?。！？]$/.test(body)) {
+            body += (['zh', 'ja'].includes(lang) ? '。' : '.');
+          }
+        }
+        return body;
+      }
+
+      function formatFullComment(body) {
+        return body + FIXED_SUFFIX;
+      }
+
+      const STORAGE_KEY = 'xcg_perth_loreal_hair_v1';
+      let state = { count: 0, history: [] };
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (typeof parsed.count === 'number' && Array.isArray(parsed.history)) {
+              state = parsed;
+            }
+          }
+        } catch (e) {}
+      }
+
+      function saveState() {
+        try {
+          if (state.history.length > 3000) {
+            state.history = state.history.slice(-3000);
+          }
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {}
+      }
+
+      let lastFullComment = null;
+
+      function updateUI() {
+        document.getElementById('counter').textContent = `Đã copy: ${state.count} comment`;
+        const preview = document.getElementById('preview');
+        if (lastFullComment) {
+          preview.textContent = lastFullComment;
+          preview.classList.remove('empty');
+          document.getElementById('btnPost').disabled = false;
+        }
+      }
+
+      function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+      }
+
+      function generateUnique() {
+        for (let i = 0; i < 200; i++) {
+          const body = generateCommentBody();
+          if (!state.history.includes(body)) return body;
+        }
+        return generateCommentBody();
+      }
+
+      async function generateAndCopy(alsoPost) {
+        const body = generateUnique();
+        const full = formatFullComment(body);
+
+        try {
+          await navigator.clipboard.writeText(full);
+        } catch (err) {
+          const ta = document.createElement('textarea');
+          ta.value = full;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); }
+          catch (e2) {
+            showToast('Copy failed. Please copy manually.');
+            lastFullComment = full;
+            updateUI();
+            return;
+          }
+          document.body.removeChild(ta);
+        }
+
+        lastFullComment = full;
+        state.count += 1;
+        state.history.push(body);
+        saveState();
+        updateUI();
+        showToast(alsoPost ? 'Copied & opening X' : 'Comment copied');
+
+        if (alsoPost) {
+          setTimeout(() => {
+            const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(full);
+            window.open(url, '_blank', 'noopener,noreferrer');
+          }, 300);
+        }
+      }
+
+      document.getElementById('btnGenerate').addEventListener('click', () => generateAndCopy(false));
+      document.getElementById('btnPost').addEventListener('click', () => generateAndCopy(true));
+
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && e.target === document.body) {
+          e.preventDefault();
+          generateAndCopy(true);
+        }
+      });
+
+      loadState();
+      updateUI();
+    })();
+  </script>
+</body>
+</html>
